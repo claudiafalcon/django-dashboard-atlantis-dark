@@ -1,0 +1,957 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %} Dashboard {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="/static/assets/css/app.css">
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="page-inner">
+    <div class="page-header">
+        <h4 class="page-title">Reporte de CDFI</h4>
+        <ul class="breadcrumbs">
+            <li class="nav-home">
+                <a href="#">
+                    <i class="flaticon-home"></i>
+                </a>
+            </li>
+            <li class="separator">
+                <i class="flaticon-right-arrow"></i>
+            </li>
+            <li class="nav-item">
+                <a href="#">Reporte de CFDI</a>
+            </li>
+            <li class="separator">
+                <i class="flaticon-right-arrow"></i>
+            </li>
+            <li class="nav-item">
+                <a href="#">Reporte para declaración</a>
+            </li>
+        </ul>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <h4 class="card-title">Búsqueda</h4>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        <div class="row">
+
+                            {% csrf_token %}
+                            {% include 'includes/cfdi_form.html' with form=form %}
+                            <div class="modal-footer no-bd">
+                                <button type="submit" class="btn btn-primary">Generar</button>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <h4 class="card-title">Estimado de declaración</h4>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row" >
+                        <div class="col-lg-auto">
+                            <form id= "formSimulado" method="post" novalidate>
+                                <div class="row">
+
+                                    {% csrf_token %}
+                                    {% include 'includes/cfdi_form.html' with form=formSimulado %}
+                                    <div class="modal-footer no-bd">
+                                        <button type="submit" class="btn btn-primary">Simular</button>
+                                    </div>
+                                </div>
+                                <script>
+                                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                                    const formSimulado = document.querySelector('#formSimulado');
+
+                                    function sendForm(event){
+                                        event.preventDefault();
+                                        $("div.simulacion").addClass("hide");
+                                        const request = new Request (
+                                            "{% url 'simulado' %}",
+                                            {
+                                                method: 'POST',
+                                                headers:{'X-CSRFToken':csrfToken},
+                                                mode:'same-origin',
+                                                body: new FormData(formSimulado)
+                                            }
+                                        );
+                                        fetch(request)
+                                            .then((response) =>{
+                                                if(response.ok){
+                                                    return response.json();
+                                                }
+                                                throw new Error ('Network reponse was not ok');
+                                            })
+                                            .then(function (data) {
+                                                console.log(data)
+                                                if(data.status ==='ok'){
+                                                    $("div.simulacion").removeClass("hide");
+                                                    acumulados = data.acumuladosSimulados;
+                                                    $('#acumulados_isrPagado').text('');
+                                                    $('#acumulados_ivaPagado').text('');
+                                                    for (const key in acumulados){
+                                                          
+                                                            console.log(`${key} : ${acumulados[key]}`)
+                                                        if(key == 'isrPagado' || key=='isrAcreditado'){
+                                                            text  = $('#acumulados_isrPagado').text();
+                                                            if(text.length == 0 || Number.isNaN(text)){
+                                                                $('#acumulados_isrPagado').text('0');
+                                                            }
+                                                            $('#acumulados_isrPagado').text(parseFloat($('#acumulados_isrPagado').text() ) + parseFloat(acumulados[key]));
+                                                            continue;
+                                                        }
+                                                        if(key == 'ivaPagado' || key=='ivaAcreditado'){
+                                                            text  = $('#acumulados_ivaPagado').text();
+                                                            if(text.length == 0 || Number.isNaN(text)){
+                                                                $('#acumulados_ivaPagado').text('0');
+                                                            }
+                                                            $('#acumulados_ivaPagado').text(parseFloat($('#acumulados_ivaPagado').text() ) + parseFloat(acumulados[key]));
+                                                            continue;
+                                                        }
+                                                        $('#acumulados_'+key).text(acumulados[key]).formatCurrency();
+                                                        
+                                                    }
+                                                    $('#acumulados_isrPagado').formatCurrency();
+                                                    $('#acumulados_ivaPagado').formatCurrency();
+
+                                                } else{
+                                                    alert('mensaje nok');
+                                                }
+                                            });
+                                        
+                                    }
+
+                                    formSimulado.addEventListener('submit', sendForm);
+
+                                </script>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">Ingresos Acumulados</p>
+                                                <h4 class="card-title currency"> {{ acumulados.ingresos }}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row simulacion hide">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i ></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">    
+                                            <div class="numbers">
+                                                <h4 id="acumulados_ingresos" class="card-tasks currency text-warning"></h4>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">Gastos Acumulados</p>
+                                                <h4 class="card-title currency"> {{ acumulados.gastos }}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row simulacion hide">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i ></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">    
+                                            <div class="numbers">
+                                                <h4 id="acumulados_gastos" class="card-tasks currency text-warning"></h4>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">Base Gravable</p>
+                                                <h4 class="card-title currency">{{ acumulados.base}}</h4>
+                                            </div>
+                                        </div>
+                                        
+                                    </div>
+                                    <div class="row simulacion hide">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i ></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">    
+                                            <div class="numbers">
+                                                <h4 id="acumulados_base" class="card-tasks currency text-warning"></h4>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                   
+                    
+                    <div class="row">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">ISR Causado</p>
+                                                <h4 class="card-title currency">{{ acumulados.isrCausado}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row simulacion hide">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i ></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">    
+                                            <div class="numbers">
+                                                <h4 id="acumulados_isrCausado" class="card-tasks currency text-warning"></h4>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-warning card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">ISR Retenido</p>
+                                                <h4 class="card-title currency">{{ acumulados.isrRetenido}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row simulacion hide">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i ></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">    
+                                            <div class="numbers">
+                                                <h4 id="acumulados_isrRetenido" class="card-tasks currency text-primary "></h4>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-3">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-9 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">ISR Pagado</p>
+                                                <p class="text-small currency">A: ${{ acumulados.isrAcreditado }}&emsp;&emsp;
+                                                P: ${{ acumulados.isrPagado }}&emsp;&emsp;
+                                                <b><em>T: ${{ acumulados.isrPagado|add:acumulados.isrAcreditado }}</em></b></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row simulacion hide">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i ></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">    
+                                            <div class="numbers">
+                                                <h4 id="acumulados_isrPagado" class="card-tasks currency text-warning"></h4>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">ISR Por Pagar</p>
+                                                <h4 class="card-title currency">{{ acumulados.isrPorPagar}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row simulacion hide">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i ></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">    
+                                            <div class="numbers">
+                                                <h4 id="acumulados_isrPorPagar" class="card-tasks currency text-warning"></h4>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>    
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">IVA Causado</p>
+                                                <h4 class="card-title currency">{{ acumulados.ivaCausado}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row simulacion hide">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i ></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">    
+                                            <div class="numbers">
+                                                <h4 id="acumulados_ivaCausado" class="card-tasks currency text-warning"></h4>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-warning card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">IVA Retenido</p>
+                                                <h4 class="card-title currency">{{ acumulados.ivaRetenido}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row simulacion hide">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i ></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">    
+                                            <div class="numbers">
+                                                <h4 id="acumulados_ivaRetenido" class="card-tasks currency text-primary"></h4>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-3">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-9 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">IVA Pagado</p>
+                                                <p class="text-small currency">A: ${{ acumulados.ivaAcreditado }}&emsp;&emsp;
+                                                P: ${{ acumulados.ivaPagado }}&emsp;&emsp;
+                                                <b><em>T: ${{ acumulados.ivaPagado|add:acumulados.ivaAcreditado }}</em></b></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row simulacion hide">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i ></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">    
+                                            <div class="numbers">
+                                                <h4 id="acumulados_ivaPagado" class="card-tasks currency text-warning"></h4>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">IVA Acreditable</p>
+                                                <h4 class="card-title currency">{{ acumulados.ivaAcreditable }}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row simulacion hide">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i ></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">    
+                                            <div class="numbers">
+                                                <h4 id="acumulados_ivaAcreditable" class="card-tasks currency text-warning"></h4>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">IVA Por Pagar</p>
+                                                <h4 class="card-title currency">{{ acumulados.ivaPorPagar}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row simulacion hide">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i ></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">    
+                                            <div class="numbers">
+                                                <h4 id="acumulados_ivaPorPagar" class="card-tasks currency text-warning"></h4>
+                                            </div>
+                                        </div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>    
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <h4 class="card-title">Ingresos</h4>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-info card-round">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">Total</p>
+                                                <h4 class="card-title currency">{{ ingresos.totalIngreso }}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-info card-round">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">Subtotal</p>
+                                                <h4 class="card-title currency">{{ ingresos.subtotalIngreso }}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-info card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">Impuestos Trasladados</p>
+                                                <h4 class="card-title currency">{{ ingresos.imptrasladadosIngreso}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-info card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">Impuestos Retenidos</p>
+                                                <h4 class="card-title currency">{{ ingresos.impretenidosIngreso}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-info card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">ISR Retenido</p>
+                                                <h4 class="card-title currency">{{ ingresos.isrRetenidoIngreso}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-info card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">IVA Retenido</p>
+                                                <h4 class="card-title currency">{{ ingresos.ivaRetenidoIngreso}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-info card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-coins"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">IVA Trasladado</p>
+                                                <h4 class="card-title currency">{{ ingresos.ivaTrasladadoIngreso}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <h4 class="card-title">Gastos</h4>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-cart"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">Total</p>
+                                                <h4 class="card-title currency"> {{ gastos.totalGastos }}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-cart"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">Subtotal</p>
+                                                <h4 class="card-title currency"> {{ gastos.subtotalGastos }}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-cart"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">Impuestos Trasladados</p>
+                                                <h4 class="card-title currency">{{ gastos.imptrasladadosGastos}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-cart"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">Impuestos Retenidos</p>
+                                                <h4 class="card-title currency">{{ gastos.impretenidosGastos}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-warning card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-cart"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">Total Deducible</p>
+                                                <h4 class="card-title currency">{{ gastos.deducibleGastos}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-cart"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">ISR Retenido</p>
+                                                <h4 class="card-title currency">{{ gastos.isrRetenidoGastos }}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-primary card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-cart"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">IVA Retenido</p>
+                                                <h4 class="card-title currency">{{ gastos.ivaRetenidoGastos}}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card card-stats card-success card-round">
+                                <div class="card-body ">
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <div class="icon-big text-center">
+                                                <i class="flaticon-cart"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-7 col-stats">
+                                            <div class="numbers">
+                                                <p class="card-category">IVA Trasladado</p>
+                                                <h4 class="card-title currency">{{ gastos.ivaTrasladadoGastos }}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <h4 class="card-title">Reporte para declaración</h4>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Modal -->
+
+                    <div class="table-responsive">
+                        <table id="add-row-comp" class="display table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>UUID</th>
+                                    <th>Archivo</th>
+                                    <th>Tipo</th>
+                                    <th>Emisor RFC</th>
+                                    <th>Nombre Emisor</th>
+                                    <th>Emisor Regimen</th>
+                                    <th>Receptor RFC</th>
+                                    <th>Nombre Receptor</th>
+                                    <th>Uso</th>
+                                    <th>Deducción Mensual</th>
+                                    <th>Estado</th>
+                                    <th>Total</th>
+                                    <th>Sub Total</th>
+                                    <th>Monto Deducible</th>
+                                    <th>Impuestos Tras.</th>
+                                    <th>Impuestos Tras Deducible.</th>
+                                    <th>Impuestos Ret.</th>
+                                    <th>Condiciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in cfdis %}
+                                <tr>
+                                    <td>{{ c.fecha }}</td>
+                                    <td>{{ c.uuid }}</td>
+                                    <td>{{ c.fileName }}</td>
+                                    <td>{{ c.tipoComprobante }}</td>
+                                    <td>{{ c.emisorRFC }}</td>
+                                    <td>{{ c.emisorName }}</td>
+                                    <td>{{ c.emisorRegimen }}</td>
+                                    <td>{{ c.receptorRFC }}</td>
+                                    <td>{{ c.receptorName }}</td>
+                                    <td>{{ c.uso.clave }}</td>
+                                    <td>{{ c.uso.isPartial }}</td>
+                                    <td>{{ c.status }}</td>
+                                    <td>{{ c.total }}</td>
+                                    <td>{{ c.subtotal }}</td>
+                                    <td>{{ c.totalDeducible }}</td>
+                                    <td>{{ c.totalImpuestosTras }}</td>
+                                    <td>{{ c.totalImpuestosTrasDeducible }}</td>
+                                    <td>{{ c.totalImpuestosRet }}</td>
+                                    <td>{{ c.condiciones }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--Totals-->
+
+
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" language="javascript"
+    src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" language="javascript"
+    src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.flash.min.js"></script>
+<script type="text/javascript" language="javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" language="javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script type="text/javascript" language="javascript"
+    src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script type="text/javascript" language="javascript"
+    src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>
+<script type="text/javascript" language="javascript"
+    src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.print.min.js"></script>
+
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>
+<script src="{% static 'assets/js/app.js' %}"></script>
+<script src="{% static 'assets/js/core/jquery.formatCurrency-1.4.0.min.js' %}"></script>
+
+
+
+{% endblock javascripts %}

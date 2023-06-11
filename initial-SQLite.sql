@@ -1,0 +1,25 @@
+-- SQLite
+--insert into app_usocfdi values (1,"G01","Adquisición de mercancias","Y");
+--insert into app_usocfdi values (2,"G02","Devoluciones, descuentos o bonificaciones","Y");
+--insert into app_usocfdi values (3,"G03","Gastos en general","Y");
+--insert into app_usocfdi values (4,"I01","Construcciones","Y");
+--insert into app_usocfdi values (5,"I02","Mobilario y equipo de oficina por inversiones","Y");
+--insert into app_usocfdi values (6,"I03","Equipo de transporte","Y");
+--insert into app_usocfdi values (7,"I04","Equipo de computo y accesorios","Y");
+--insert into app_usocfdi values (8,"I05","Dados, troqueles, moldes, matrices y herramental","Y");
+--insert into app_usocfdi values (9,"I06","Comunicaciones telefónicas","Y");
+--insert into app_usocfdi values (10,"I07","Comunicaciones satelitales","Y");
+--insert into app_usocfdi values (11,"I08","Otra maquinaria y equipo","Y");
+--insert into app_usocfdi values (12,"D01","Honorarios médicos, dentales y gastos hospitalarios.","N");
+--insert into app_usocfdi values (13,"D02","Gastos médicos por incapacidad o discapacidad","N");
+--insert into app_usocfdi values (14,"D03","Gastos funerales.","N");
+--insert into app_usocfdi values (15,"D04","Donativos.","N");
+--insert into app_usocfdi values (16,"D05","Intereses reales efectivamente pagados por créditos hipotecarios (casa habitación).","N");
+--insert into app_usocfdi values (17,"D06","Aportaciones voluntarias al SAR.","N");
+--insert into app_usocfdi values (18,"D07","Primas por seguros de gastos médicos.","N");
+--insert into app_usocfdi values (19,"D08","Gastos de transportación escolar obligatoria.","N");
+--insert into app_usocfdi values (20,"D09","Depósitos en cuentas para el ahorro, primas que tengan como base planes de pensiones.","N");
+--insert into app_usocfdi values (21,"D10","Pagos por servicios educativos (colegiaturas)","N");
+--insert into app_usocfdi values (22,"P01","Por definir","Y");
+
+insert into app_claveserviciocontopecfdi values (3,25101500,175000,'','','Y');

@@ -1,0 +1,25 @@
+#cfdiType_input{
+    padding-bottom: 10px;
+    width: inherit;
+    padding-right: 50px;
+}
+
+.selectgroup-item.cfdi_type_item{
+    margin:0px auto;
+}
+
+
+
+.simulacion.hide{
+    display: none;
+}
+
+.input-symbol-euro {
+    position: relative;
+  }
+  .input-symbol-euro input {
+    padding-right: 18px;
+  }
+  .input-symbol-euro:before {
+    content: "$";
+  }
