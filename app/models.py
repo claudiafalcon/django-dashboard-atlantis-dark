@@ -114,6 +114,19 @@ class TablasDeISR(models.Model):
     cuotaFija = models.FloatField()
     porcentajeExcedente = models.FloatField()
 
+class Declaracion(models.Model):
+    type = models.CharField(max_length=64)
+    period = models.CharField(max_length=64)
+    fecha = models.DateField()
+    operationNumber = models.CharField(max_length=64)
+    year = models.IntegerField()
+    media =  models.CharField(max_length=64)
+    isrInFavor = models.FloatField(default=0.0,blank=True, null=True)
+    isrInCharge = models.FloatField(default=0.0,blank=True, null=True)
+    isrToBePay = models.FloatField(default=0.0,blank=True, null=True)
+    ivaInFavor = models.FloatField(default=0.0,blank=True, null=True)
+    ivaInCharge = models.FloatField(default=0.0,blank=True, null=True)
+    ivaToBePay = models.FloatField(default=0.0,blank=True, null=True)
 
 class PagosEfecturados(models.Model):
     year = models.IntegerField()
@@ -121,7 +134,11 @@ class PagosEfecturados(models.Model):
     impuesto = models.CharField(max_length=3)
     total =  models.FloatField()
     tipo = models.CharField(max_length=1,default='P')
+    references = models.ManyToManyField(Declaracion)
     
+
+    
+
 
 
 
